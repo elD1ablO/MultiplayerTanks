@@ -93,6 +93,11 @@ public class ProjectileLauncher : NetworkBehaviour
         // Set the projectile to look in the specified direction
         projectileInstance.transform.rotation = Quaternion.LookRotation(direction);
 
+        if(projectileInstance.TryGetComponent<DealDamageOnContact>(out DealDamageOnContact dealDamage))
+        {
+            dealDamage.SetOwner(OwnerClientId);
+        }
+
         if (projectileInstance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody))
         {
             rigidbody.linearVelocity = rigidbody.transform.forward * projectileSpeed;
@@ -116,16 +121,16 @@ public class ProjectileLauncher : NetworkBehaviour
         }
     }
     private void IgnoreProjectileCollisions(GameObject projectile1, GameObject projectile2)
-{
-    Collider[] colliders1 = projectile1.GetComponentsInChildren<Collider>();
-    Collider[] colliders2 = projectile2.GetComponentsInChildren<Collider>();
-
-    foreach (var collider1 in colliders1)
     {
-        foreach (var collider2 in colliders2)
+        Collider[] colliders1 = projectile1.GetComponentsInChildren<Collider>();
+        Collider[] colliders2 = projectile2.GetComponentsInChildren<Collider>();
+
+        foreach (var collider1 in colliders1)
         {
-            Physics.IgnoreCollision(collider1, collider2);
-        }
+            foreach (var collider2 in colliders2)
+            {
+                Physics.IgnoreCollision(collider1, collider2);
+            }
+         }
     }
-}
 }
