@@ -21,11 +21,11 @@ public class ProjectileLauncher : NetworkBehaviour
     [SerializeField] private float projectileSpeed;
     [SerializeField] private float fireRate;
 
-    private BoxCollider projectileServerCollider;
-    private BoxCollider projectileClientCollider;
+    [SerializeField] private int costToFire;
 
-    private bool shouldFire;
-    private float previousFireTime;
+    private float timer;
+
+    private bool shouldFire;   
 
 
     public override void OnNetworkSpawn()
@@ -51,15 +51,22 @@ public class ProjectileLauncher : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner || !shouldFire)
-        { return; }
+        if (!IsOwner) { return; }
 
-        if (Time.time < 1/ fireRate + previousFireTime)
+        if (timer > 0)
+        {
+            timer -= Time.deltaTime; 
+        }
+
+        if(!shouldFire) { return; }
+
+        if (timer > 0)
             { return; }
 
         PrimaryFireServerRpc(projectileSpawnPoint.position, projectileSpawnPoint.forward);
         SpawnProjectile(projectileSpawnPoint.position, projectileSpawnPoint.forward);
-        previousFireTime = Time.time;
+        
+        timer = 1 / fireRate;
     }
 
     private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction)
