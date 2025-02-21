@@ -5,7 +5,7 @@ public class HostSingleton : MonoBehaviour
 {
     private static HostSingleton instance;
     
-    public HostGameManager gameManager {get; private set;}
+    public HostGameManager GameManager {get; private set;}
     public static HostSingleton Instance 
     { 
         get 
@@ -29,8 +29,11 @@ public class HostSingleton : MonoBehaviour
 
     public void CreateHost()
     {
-        gameManager = new HostGameManager();
+        GameManager = new HostGameManager();
     }
 
-
+    private void OnDestroy()
+    {
+        GameManager?.Dispose();
+    }
 }

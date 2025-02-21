@@ -12,8 +12,10 @@ using UnityEngine.SceneManagement;
 using Unity.Services.Lobbies.Models;
 using System.Collections.Generic;
 using System.Collections;
+using System.Text;
+using Unity.Services.Authentication;
 
-public class HostGameManager 
+public class HostGameManager : IDisposable
 {
     private const int MAX_CONNECTIONS = 20;
     
@@ -21,6 +23,8 @@ public class HostGameManager
 
     public string joinCode { get; private set; }
     private string lobbyId;
+    private NetworkServer networkServer;
+
     public async Task StartHostAsync()
     {
         try
@@ -60,7 +64,8 @@ public class HostGameManager
                     "JoinCode", new DataObject(visibility: DataObject.VisibilityOptions.Member, value: joinCode)
                 }
             };
-            Lobby lobby = await LobbyService.Instance.CreateLobbyAsync("My lobby", MAX_CONNECTIONS, lobbyOptions);
+            string playerName = PlayerPrefs.GetString(NameSelector.PLAYERNAMEKEY, "Default");
+            Lobby lobby = await LobbyService.Instance.CreateLobbyAsync($"{playerName}'s Lobby", MAX_CONNECTIONS, lobbyOptions);
             lobbyId = lobby.Id;
 
             HostSingleton.Instance.StartCoroutine(HeartbeatLobby(15));
@@ -70,6 +75,19 @@ public class HostGameManager
             Debug.Log(e);
             return;
         }
+
+        networkServer = new NetworkServer(NetworkManager.Singleton);
+
+        UserData userData = new UserData()
+        {
+            userName = PlayerPrefs.GetString(NameSelector.PLAYERNAMEKEY, "DefaultName"),
+            userAuthID = AuthenticationService.Instance.PlayerId
+        };
+
+        string payload = JsonUtility.ToJson(userData);
+        byte[] payloadBytes = Encoding.UTF8.GetBytes(payload);
+
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = payloadBytes;
 
         NetworkManager.Singleton.StartHost();
 
@@ -84,5 +102,24 @@ public class HostGameManager
             LobbyService.Instance.SendHeartbeatPingAsync(lobbyId);
             yield return delay;
         }
+    }
+    public async void Dispose()
+    {
+        HostSingleton.Instance.StopCoroutine(nameof(HeartbeatLobby));
+
+        if (!string.IsNullOrEmpty(lobbyId))
+        {
+            try
+            {
+                await LobbyService.Instance.DeleteLobbyAsync(lobbyId);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.LogException(e);
+            }
+            lobbyId = string.Empty;
+        }
+        
+        networkServer?.Dispose();
     }
 }

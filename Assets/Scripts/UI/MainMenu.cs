@@ -8,7 +8,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private TMP_InputField inputField;
     public async void StartHostPressed()
     {
-        await HostSingleton.Instance.gameManager.StartHostAsync();
+        await HostSingleton.Instance.GameManager.StartHostAsync();
     }
 
     public async void StartClient()
