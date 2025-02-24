@@ -25,12 +25,27 @@ public class NetworkServer : IDisposable
         authIdToUserData[userData.userAuthID] = userData;
 
         response.Approved = true;
+        response.Position = SpawnPoint.GetRandomSpawnPos();
+        response.Rotation = Quaternion.identity;
         response.CreatePlayerObject = true;
     }
 
     private void OnNetworkReady()
     {
         _networkManager.OnClientDisconnectCallback += OnClientDisconnect;
+    }
+
+    public UserData GetUserByClientID(ulong clientID)
+    {
+        if(clientIdToAuth.TryGetValue(clientID, out string authID))
+        {
+            if(authIdToUserData.TryGetValue(authID, out UserData userData))
+            {
+                return userData;
+            }
+            return null;
+        }
+        return null;
     }
 
     private void OnClientDisconnect(ulong clientID)
