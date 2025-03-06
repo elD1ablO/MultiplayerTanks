@@ -59,7 +59,6 @@ public class CoinSpawner : NetworkBehaviour
                 validPosition = true;
             }
         }
-
         return spawnPoint;
     }
 }
